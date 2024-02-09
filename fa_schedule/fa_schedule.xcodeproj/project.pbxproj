@@ -11,6 +11,8 @@
 		80F0DCBC2B765A0A0068AD3E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80F0DCBB2B765A0A0068AD3E /* ContentView.swift */; };
 		80F0DCBE2B765A0C0068AD3E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 80F0DCBD2B765A0C0068AD3E /* Assets.xcassets */; };
 		80F0DCC12B765A0C0068AD3E /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 80F0DCC02B765A0C0068AD3E /* Preview Assets.xcassets */; };
+		80F0DCC82B765A470068AD3E /* ScheduleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80F0DCC72B765A470068AD3E /* ScheduleService.swift */; };
+		80F0DCCB2B7663940068AD3E /* ClassInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80F0DCCA2B7663930068AD3E /* ClassInfo.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -19,6 +21,9 @@
 		80F0DCBB2B765A0A0068AD3E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		80F0DCBD2B765A0C0068AD3E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		80F0DCC02B765A0C0068AD3E /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		80F0DCC72B765A470068AD3E /* ScheduleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleService.swift; sourceTree = "<group>"; };
+		80F0DCC92B765ED00068AD3E /* fa-schedule-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "fa-schedule-Info.plist"; sourceTree = SOURCE_ROOT; };
+		80F0DCCA2B7663930068AD3E /* ClassInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClassInfo.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,10 +56,13 @@
 		80F0DCB82B765A090068AD3E /* fa_schedule */ = {
 			isa = PBXGroup;
 			children = (
+				80F0DCC92B765ED00068AD3E /* fa-schedule-Info.plist */,
 				80F0DCB92B765A0A0068AD3E /* fa_scheduleApp.swift */,
 				80F0DCBB2B765A0A0068AD3E /* ContentView.swift */,
 				80F0DCBD2B765A0C0068AD3E /* Assets.xcassets */,
 				80F0DCBF2B765A0C0068AD3E /* Preview Content */,
+				80F0DCC72B765A470068AD3E /* ScheduleService.swift */,
+				80F0DCCA2B7663930068AD3E /* ClassInfo.swift */,
 			);
 			path = fa_schedule;
 			sourceTree = "<group>";
@@ -137,6 +145,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				80F0DCCB2B7663940068AD3E /* ClassInfo.swift in Sources */,
+				80F0DCC82B765A470068AD3E /* ScheduleService.swift in Sources */,
 				80F0DCBC2B765A0A0068AD3E /* ContentView.swift in Sources */,
 				80F0DCBA2B765A0A0068AD3E /* fa_scheduleApp.swift in Sources */,
 			);
@@ -275,6 +285,7 @@
 				DEVELOPMENT_TEAM = MH6JGX4QN8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "fa-schedule-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -304,6 +315,7 @@
 				DEVELOPMENT_TEAM = MH6JGX4QN8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "fa-schedule-Info.plist";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
