@@ -110,27 +110,30 @@ struct ClassRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(classInfo.discipline).fontWeight(.bold)
-            Text("Тип: \(classInfo.kindOfWork)")
+            // Text("Тип: \(classInfo.kindOfWork)")
             Text("Время: \(classInfo.beginLesson) - \(classInfo.endLesson)")
             Text("Аудитория: \(classInfo.auditorium)")
             Text("Преподаватель: \(classInfo.lecturer)")
         }
         .padding()
+        .frame(maxWidth: .infinity, alignment: .leading) // Заставляет блок растягиваться на всю доступную ширину
         .background(self.backgroundColor(forKindOfWork: classInfo.kindOfWork))
         .cornerRadius(8)
+        .padding(.horizontal) // Добавляет отступы с обеих сторон
     }
     
     private func backgroundColor(forKindOfWork kindOfWork: String) -> Color {
         switch kindOfWork {
-        case "Лекция":
-            return Color.blue.opacity(0.2)
-        case "Практические":
+        case "Лекции":
+            return Color.red.opacity(0.2)
+        case "Практические (семинарские) занятия":
             return Color.green.opacity(0.2)
         default:
             return Color.gray.opacity(0.1)
         }
     }
 }
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
