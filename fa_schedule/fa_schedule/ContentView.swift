@@ -8,23 +8,47 @@
 import SwiftUI
 import UIKit
 
-import SwiftUI
-
 struct ContentView: View {
     @StateObject private var scheduleService = ScheduleService()
     @State private var selectedDay: String?
     
+    // Определяем базовые и пользовательские дисциплины
+    private let basicDisciplines = [
+        "Иностранный язык в профессиональной сфере",
+        "Информационное право",
+        "Программная инженерия",
+        "Бухгалтерские информационные системы",
+        "Машинное обучение в семантическом и сетевом анализе"
+    ]
+    
+    private var userDisciplines: [String] {
+        [
+            "Управление качеством программных систем",
+            "Проектирование информационных систем",
+            "Основы технологий интернета вещей"
+        ] + basicDisciplines
+    }
+    
+    private let targetForeignLecturer = "Романова"
+    private let foreignLanguageDiscipline = "Иностранный язык в профессиональной сфере"
+
     var body: some View {
         NavigationView {
             VStack {
                 // Заголовок и кнопки для переключения дней
                 headerView
-                
+
                 // Список пар для выбранного дня
                 if let day = selectedDay, let classesForDay = scheduleService.groupedScheduleData[day] {
                     ScrollView {
-                        ForEach(classesForDay) { classInfo in
-                            ClassRowView(classInfo: classInfo)
+                        VStack {
+                            ForEach(classesForDay) { classInfo in
+                                if classInfo.discipline == foreignLanguageDiscipline && classInfo.lecturer.contains(targetForeignLecturer) {
+                                    ClassRowView(classInfo: classInfo)
+                                } else if userDisciplines.contains(classInfo.discipline) && classInfo.discipline != foreignLanguageDiscipline {
+                                    ClassRowView(classInfo: classInfo)
+                                }
+                            }
                         }
                     }
                 } else {
@@ -38,7 +62,7 @@ struct ContentView: View {
             }
         }
     }
-    
+
     var headerView: some View {
         VStack {
             if !scheduleService.days.isEmpty {
@@ -63,7 +87,6 @@ struct ContentView: View {
         }
     }
 }
-
 struct DayButton: View {
     var day: String
     var isSelected: Bool
