@@ -9,7 +9,11 @@ import Foundation
 
 struct ClassInfo: Codable, Identifiable {
     let id = UUID()
+    let createdDate: String
     let date: String
+    let dateOfNest: String
+    let dayOfWeek: Int
+    let dayOfWeekString: String
     let discipline: String
     let beginLesson: String
     let endLesson: String
@@ -18,6 +22,7 @@ struct ClassInfo: Codable, Identifiable {
     let lecturer: String
     
     private enum CodingKeys: String, CodingKey {
-        case date, discipline, beginLesson, endLesson, auditorium, kindOfWork, lecturer
+        case createdDate = "createddate", date, dateOfNest, dayOfWeek, dayOfWeekString, discipline, beginLesson, endLesson, auditorium, kindOfWork, lecturer
     }
 }
+
