@@ -6,106 +6,111 @@
 //
 
 import SwiftUI
+import UIKit
+
+import SwiftUI
 
 struct ContentView: View {
     @StateObject private var scheduleService = ScheduleService()
+    @State private var selectedDay: String?
     
-    private let targetForeignLecturer = "Романова"
-    private let foreignLanguageDiscipline = "Иностранный язык в профессиональной сфере"
-    
-    // Определяем базовые и пользовательские дисциплины
-    private let basic_disciplines = [
-        "Иностранный язык в профессиональной сфере",
-        "Информационное право",
-        "Программная инженерия",
-        "Бухгалтерские информационные системы",
-        "Машинное обучение в семантическом и сетевом анализе"]
-    private var user_disciplines: [String] { [
-        "Управление качеством программных систем",
-        "Проектирование информационных систем",
-        "Основы технологий интернета вещей"
-    ] + basic_disciplines
-    }
-    
-    // DateFormatter для форматирования дат
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MM.dd" // Формат только с месяцем и днем
-        return formatter
-    }()
-    
-    // В ContentView
     var body: some View {
         NavigationView {
             VStack {
+                // Заголовок и кнопки для переключения дней
+                headerView
+                
+                // Список пар для выбранного дня
+                if let day = selectedDay, let classesForDay = scheduleService.groupedScheduleData[day] {
+                    ScrollView {
+                        ForEach(classesForDay) { classInfo in
+                            ClassRowView(classInfo: classInfo)
+                        }
+                    }
+                } else {
+                    Text("Выберите день для отображения расписания.")
+                        .padding()
+                }
+            }
+            .navigationTitle("Расписание")
+            .onAppear {
+                scheduleService.fetchSchedule()
+            }
+        }
+    }
+    
+    var headerView: some View {
+        VStack {
+            if !scheduleService.days.isEmpty {
+                // Если дни еще не загружены, selectedDay будет nil, поэтому установим его в первый день
+                let initialDay = selectedDay ?? scheduleService.days.first!
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
+                    HStack {
                         ForEach(scheduleService.days, id: \.self) { day in
-                            if let classesForDay = scheduleService.groupedScheduleData[day] {
-                                VStack(alignment: .leading, spacing: 10) {
-                                    Text(day)
-                                        .font(.headline)
-                                        .padding(.leading)
-                                    
-                                    ForEach(classesForDay) { classInfo in
-                                        if classInfo.discipline == foreignLanguageDiscipline && classInfo.lecturer.contains(targetForeignLecturer) {
-                                            ClassRowView(classInfo: classInfo)
-                                        } else if user_disciplines.contains(classInfo.discipline) && classInfo.discipline != foreignLanguageDiscipline {
-                                            ClassRowView(classInfo: classInfo)
-                                        }
-                                    }
-                                    .frame(width: UIScreen.main.bounds.width - 30, alignment: .leading)
-                                    .background(Color.white)
-                                    .cornerRadius(10)
-                                    .shadow(radius: 5)
-                                }
+                            DayButton(day: day, isSelected: day == initialDay) {
+                                selectedDay = day
                             }
                         }
-                        .padding(.horizontal)
                     }
-                    .frame(height: UIScreen.main.bounds.height / 2)
                 }
-                .navigationTitle("Расписание")
                 .onAppear {
-                    scheduleService.fetchSchedule()
+                    // Установим выбранный день после загрузки данных
+                    if selectedDay == nil {
+                        selectedDay = scheduleService.days.first
+                    }
                 }
             }
         }
-        
     }
+}
+
+struct DayButton: View {
+    var day: String
+    var isSelected: Bool
+    var action: () -> Void
     
-    struct ClassRowView: View {
-        let classInfo: ClassInfo
-        
-        var body: some View {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(classInfo.discipline).fontWeight(.bold)
-                Text("Тип: \(classInfo.kindOfWork)")
-                Text("Время: \(classInfo.beginLesson) - \(classInfo.endLesson)")
-                Text("Аудитория: \(classInfo.auditorium)")
-                Text("Преподаватель: \(classInfo.lecturer)")
-                
-            }
-            .padding()
-            .background(self.backgroundColor(forKindOfWork: classInfo.kindOfWork))
-            .cornerRadius(50)
-        }
-        
-        private func backgroundColor(forKindOfWork kindOfWork: String) -> Color {
-            if kindOfWork.contains("Лекция") {
-                return Color.blue.opacity(0.2)
-            } else if kindOfWork.contains("Практические") {
-                return Color.green.opacity(0.2)
-            } else {
-                return Color.gray.opacity(0.1) // Легкий фон для других типов работ
-            }
+    var body: some View {
+        Button(action: action) {
+            Text(day)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 20)
+                .background(isSelected ? Color.blue : Color.gray)
+                .foregroundColor(.white)
+                .clipShape(Capsule())
         }
     }
+}
+
+struct ClassRowView: View {
+    let classInfo: ClassInfo
     
-    struct ContentView_Previews: PreviewProvider {
-        static var previews: some View {
-            ContentView()
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(classInfo.discipline).fontWeight(.bold)
+            Text("Тип: \(classInfo.kindOfWork)")
+            Text("Время: \(classInfo.beginLesson) - \(classInfo.endLesson)")
+            Text("Аудитория: \(classInfo.auditorium)")
+            Text("Преподаватель: \(classInfo.lecturer)")
         }
+        .padding()
+        .background(self.backgroundColor(forKindOfWork: classInfo.kindOfWork))
+        .cornerRadius(8)
     }
     
+    private func backgroundColor(forKindOfWork kindOfWork: String) -> Color {
+        switch kindOfWork {
+        case "Лекция":
+            return Color.blue.opacity(0.2)
+        case "Практические":
+            return Color.green.opacity(0.2)
+        default:
+            return Color.gray.opacity(0.1)
+        }
+    }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
 }
