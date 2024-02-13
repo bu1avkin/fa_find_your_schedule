@@ -69,13 +69,14 @@ struct ContentView: View {
                 // Если дни еще не загружены, selectedDay будет nil, поэтому установим его в первый день
                 let initialDay = selectedDay ?? scheduleService.days.first!
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
+                    HStack(spacing: 8) {
                         ForEach(scheduleService.days, id: \.self) { day in
                             DayButton(day: day, isSelected: day == initialDay) {
                                 selectedDay = day
                             }
                         }
                     }
+                    .padding(.horizontal)
                 }
                 .onAppear {
                     // Установим выбранный день после загрузки данных
@@ -92,11 +93,28 @@ struct DayButton: View {
     var isSelected: Bool
     var action: () -> Void
     
+    // Создаем DateFormatter для преобразования строки в дату и обратно
+    private static var dayNumberFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd" // Исходный формат даты
+        return formatter
+    }()
+    
+    // Функция для преобразования строки даты в только число дня
+    private func dayNumber(from day: String) -> String {
+            if let date = DayButton.dayNumberFormatter.date(from: day) {
+                DayButton.dayNumberFormatter.dateFormat = "d" // Новый формат даты, показывающий только число
+                defer { DayButton.dayNumberFormatter.dateFormat = "yyyy.MM.dd" } // Восстановить исходный формат
+                return DayButton.dayNumberFormatter.string(from: date)
+            }
+            return day // В случае ошибки вернуть исходную строку
+        }
+    
     var body: some View {
         Button(action: action) {
-            Text(day)
+            Text(dayNumber(from: day))
                 .padding(.vertical, 8)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 18)
                 .background(isSelected ? Color.blue : Color.gray)
                 .foregroundColor(.white)
                 .clipShape(Capsule())
@@ -106,33 +124,54 @@ struct DayButton: View {
 
 struct ClassRowView: View {
     let classInfo: ClassInfo
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(classInfo.discipline).fontWeight(.bold)
-            // Text("Тип: \(classInfo.kindOfWork)")
-            Text("Время: \(classInfo.beginLesson) - \(classInfo.endLesson)")
-            Text("Аудитория: \(classInfo.auditorium)")
-            Text("Преподаватель: \(classInfo.lecturer)")
+        HStack(alignment: .top) {
+            VStack(spacing: 2) {
+                Image(systemName: "circle.fill")
+                    .imageScale(.medium)
+                    .font(.footnote)
+                    .foregroundColor(self.backgroundColor(forKindOfWork: classInfo.kindOfWork))
+                Rectangle()
+                    .frame(width: 2)
+                    .foregroundColor(self.backgroundColor(forKindOfWork: classInfo.kindOfWork))
+            }
+            .frame(height: 140)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(classInfo.beginLesson)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                Text(classInfo.discipline)
+                    .font(.system(.headline, weight: .medium))
+                Text(classInfo.kindOfWork)
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                Text("Аудитория: \(classInfo.auditorium)")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                Text("Преподаватель: \(classInfo.lecturer)")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading) // Заставляет блок растягиваться на всю доступную ширину
-        .background(self.backgroundColor(forKindOfWork: classInfo.kindOfWork))
-        .cornerRadius(8)
-        .padding(.horizontal) // Добавляет отступы с обеих сторон
+        .padding(.horizontal)
     }
-    
+
     private func backgroundColor(forKindOfWork kindOfWork: String) -> Color {
         switch kindOfWork {
         case "Лекции":
-            return Color.red.opacity(0.2)
+            return Color.blue
         case "Практические (семинарские) занятия":
-            return Color.green.opacity(0.2)
+            return Color.green
         default:
-            return Color.gray.opacity(0.1)
+            return Color.gray
         }
     }
 }
+
 
 
 struct ContentView_Previews: PreviewProvider {
