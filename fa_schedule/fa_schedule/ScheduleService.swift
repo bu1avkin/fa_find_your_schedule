@@ -12,7 +12,19 @@ class ScheduleService: ObservableObject {
     @Published var days = [String]()
 
     func fetchSchedule() {
-        guard let url = URL(string: "https://ruz.fa.ru/api/schedule/group/110815?start=2024.02.12&finish=2024.02.18&lng=1") else { return }
+        let calendar = Calendar.current
+        let today = Date()
+        let twoWeeksBefore = calendar.date(byAdding: .weekOfYear, value: -2, to: today)!
+        let threeWeeksAfter = calendar.date(byAdding: .weekOfYear, value: 3, to: today)!
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy.MM.dd"
+
+        let startDate = dateFormatter.string(from: twoWeeksBefore)
+        let finishDate = dateFormatter.string(from: threeWeeksAfter)
+
+        let urlString = "https://ruz.fa.ru/api/schedule/group/110815?start=\(startDate)&finish=\(finishDate)&lng=1"
+        guard let url = URL(string: urlString) else { return }
 
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
             guard let data = data, error == nil else {

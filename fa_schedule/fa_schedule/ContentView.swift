@@ -11,6 +11,30 @@ import UIKit
 struct ContentView: View {
     @StateObject private var scheduleService = ScheduleService()
     @State private var selectedDay: String?
+
+    // Создаем DateFormatter для получения названия месяца
+    private let monthFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "LLLL" // Формат для получения полного названия месяца
+        formatter.locale = Locale(identifier: "ru_RU") // Установка локали, если нужно
+        return formatter
+    }()
+    
+    // Функция для получения названия месяца из строки даты
+    private func monthName(from date: String) -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy.MM.dd" // Формат даты, соответствующий вашему API
+        if let date = dateFormatter.date(from: date) {
+            return monthFormatter.string(from: date).capitalized
+        }
+        return "Расписание" // В случае ошибки вернуть заглушку
+    }
+    
+    private var todayString: String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy.MM.dd"
+        return dateFormatter.string(from: Date())
+    }
     
     // Определяем базовые и пользовательские дисциплины
     private let basicDisciplines = [
@@ -31,13 +55,13 @@ struct ContentView: View {
     
     private let targetForeignLecturer = "Романова"
     private let foreignLanguageDiscipline = "Иностранный язык в профессиональной сфере"
-
+    
     var body: some View {
         NavigationView {
             VStack {
                 // Заголовок и кнопки для переключения дней
                 headerView
-
+                
                 // Список пар для выбранного дня
                 if let day = selectedDay, let classesForDay = scheduleService.groupedScheduleData[day] {
                     ScrollView {
@@ -56,71 +80,110 @@ struct ContentView: View {
                         .padding()
                 }
             }
-            .navigationTitle("Расписание")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    // Анимированное отображение названия месяца или "Расписание"
+                    if let selectedDay = selectedDay {
+                        Text(monthName(from: selectedDay))
+                            .font(.headline)
+                            .transition(.opacity)
+                            .animation(.default, value: selectedDay)
+                    } else {
+                        Text("Расписание")
+                            .font(.headline)
+                    }
+                }
+            }
             .onAppear {
                 scheduleService.fetchSchedule()
             }
         }
     }
-
+    
     var headerView: some View {
         VStack {
             if !scheduleService.days.isEmpty {
-                // Если дни еще не загружены, selectedDay будет nil, поэтому установим его в первый день
-                let initialDay = selectedDay ?? scheduleService.days.first!
+                // Установка сегодняшней даты
+                let todayString = DateFormatter.yyyyMMdd.string(from: Date())
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(scheduleService.days, id: \.self) { day in
-                            DayButton(day: day, isSelected: day == initialDay) {
-                                selectedDay = day
+                    ScrollViewReader { scrollViewProxy in
+                        HStack(spacing: 8) {
+                            ForEach(scheduleService.days, id: \.self) { day in
+                                DayButton(day: day, isSelected: day == selectedDay) {
+                                    selectedDay = day
+                                }
+                                .id(day)
                             }
                         }
-                    }
-                    .padding(.horizontal)
-                }
-                .onAppear {
-                    // Установим выбранный день после загрузки данных
-                    if selectedDay == nil {
-                        selectedDay = scheduleService.days.first
+                        .padding(.horizontal)
+                        .onAppear {
+                            // Установка selectedDay в сегодняшний день
+                            selectedDay = todayString
+                            // Прокрутка к сегодняшнему дню с анимацией
+                            DispatchQueue.main.async {
+                                withAnimation {
+                                    scrollViewProxy.scrollTo(todayString, anchor: .center)
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
 }
+
+extension DateFormatter {
+    static let yyyyMMdd: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd"
+        return formatter
+    }()
+}
+    
+
 struct DayButton: View {
     var day: String
     var isSelected: Bool
     var action: () -> Void
     
-    // Создаем DateFormatter для преобразования строки в дату и обратно
     private static var dayNumberFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy.MM.dd" // Исходный формат даты
+        formatter.dateFormat = "yyyy.MM.dd"
         return formatter
     }()
     
-    // Функция для преобразования строки даты в только число дня
     private func dayNumber(from day: String) -> String {
-            if let date = DayButton.dayNumberFormatter.date(from: day) {
-                DayButton.dayNumberFormatter.dateFormat = "d" // Новый формат даты, показывающий только число
-                defer { DayButton.dayNumberFormatter.dateFormat = "yyyy.MM.dd" } // Восстановить исходный формат
-                return DayButton.dayNumberFormatter.string(from: date)
-            }
-            return day // В случае ошибки вернуть исходную строку
+        if let date = DayButton.dayNumberFormatter.date(from: day) {
+            DayButton.dayNumberFormatter.dateFormat = "d"
+            defer { DayButton.dayNumberFormatter.dateFormat = "yyyy.MM.dd" }
+            return DayButton.dayNumberFormatter.string(from: date)
         }
+        return day
+    }
     
     var body: some View {
         Button(action: action) {
             Text(dayNumber(from: day))
+                .font(.system(size: 16, weight: .medium))
+                .frame(minWidth: 36)
                 .padding(.vertical, 8)
-                .padding(.horizontal, 18)
-                .background(isSelected ? Color.blue : Color.gray)
-                .foregroundColor(.white)
+                .background(
+                    isSelected ? AnyView(LinearGradient(gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]), startPoint: .top, endPoint: .bottom)) : AnyView(Color.gray.opacity(0.3))
+                )
+                .foregroundColor(isSelected ? .white : .black)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                )
                 .clipShape(Capsule())
+                .shadow(color: isSelected ? Color.blue.opacity(0.5) : Color.clear, radius: 5, x: 0, y: 0)
+                .animation(.easeInOut, value: isSelected)
         }
     }
 }
+
 
 struct ClassRowView: View {
     let classInfo: ClassInfo
