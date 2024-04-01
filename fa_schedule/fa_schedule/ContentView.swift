@@ -8,9 +8,27 @@
 import SwiftUI
 import UIKit
 
+struct AnimatedImage: UIViewRepresentable {
+    var name: String
+    
+    func makeUIView(context: Self.Context) -> UIImageView {
+        let imageView = UIImageView()
+        imageView.contentMode = .scaleAspectFit
+        let gif = UIImage.gif(name: name)
+        imageView.image = gif
+        return imageView
+    }
+    
+    func updateUIView(_ uiView: UIImageView, context: UIViewRepresentableContext<AnimatedImage>) {
+        // Обновление не требуется, так как GIF анимация воспроизводится автоматически
+    }
+}
+
 struct ContentView: View {
     @StateObject private var scheduleService = ScheduleService()
     @State private var selectedDay: String?
+    @State private var isLoading = true
+    @State private var contentOpacity = 0.0
 
     // Создаем DateFormatter для получения названия месяца
     private let monthFormatter: DateFormatter = {
@@ -53,45 +71,64 @@ struct ContentView: View {
         ] + basicDisciplines
     }
     
-    private let targetForeignLecturer = "Романова"
+    private let targetForeignLecturer = "Виноградова"
     private let foreignLanguageDiscipline = "Иностранный язык в профессиональной сфере"
     
     var body: some View {
         NavigationView {
             VStack {
-                // Заголовок и кнопки для переключения дней
-                headerView
-                
-                // Список пар для выбранного дня
-                if let day = selectedDay, let classesForDay = scheduleService.groupedScheduleData[day] {
-                    ScrollView {
-                        VStack {
-                            ForEach(classesForDay) { classInfo in
-                                if classInfo.discipline == foreignLanguageDiscipline && classInfo.lecturer.contains(targetForeignLecturer) {
-                                    ClassRowView(classInfo: classInfo)
-                                } else if userDisciplines.contains(classInfo.discipline) && classInfo.discipline != foreignLanguageDiscipline {
-                                    ClassRowView(classInfo: classInfo)
+                if isLoading {
+                    Spacer()
+                    //ProgressView()
+                       //.progressViewStyle(CircularProgressViewStyle())
+                        //.scaleEffect(1.5)
+                    GifImage("loadingCat1")
+                                            .frame(width: 150, height: 150)
+                    Spacer()
+                } else {
+                    // Контент будет появляться с анимацией изменения прозрачности
+                    VStack {
+                        headerView
+                            .opacity(contentOpacity) // Применяем анимацию к headerView
+                        if let day = selectedDay, let classesForDay = scheduleService.groupedScheduleData[day], !classesForDay.isEmpty {
+                            ScrollView {
+                                VStack(alignment: .leading) {
+                                    ForEach(classesForDay) { classInfo in
+                                        if classInfo.discipline == foreignLanguageDiscipline && classInfo.lecturer.contains(targetForeignLecturer) {
+                                            ClassRowView(classInfo: classInfo)
+                                        } else if userDisciplines.contains(classInfo.discipline) && classInfo.discipline != foreignLanguageDiscipline {
+                                            ClassRowView(classInfo: classInfo)
+                                        }
+                                    }
                                 }
                             }
+                            .padding(14)
+                        } else {
+                            Text("Выберите день для отображения расписания.")
+                                .padding()
                         }
                     }
-                } else {
-                    Text("Выберите день для отображения расписания.")
-                        .padding()
+                    .opacity(contentOpacity) // Применяем анимацию ко всему VStack
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    // Анимированное отображение названия месяца или "Расписание"
                     if let selectedDay = selectedDay {
                         Text(monthName(from: selectedDay))
                             .font(.headline)
-                            .transition(.opacity)
-                            .animation(.default, value: selectedDay)
                     } else {
                         Text("Расписание")
                             .font(.headline)
+                    }
+                }
+            }
+            .onAppear {
+                // Задержка перед снятием состояния загрузки
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                    withAnimation(.easeOut(duration: 1.0)) {
+                        isLoading = false
+                        contentOpacity = 1.0 // Контент становится полностью непрозрачным
                     }
                 }
             }
@@ -134,6 +171,18 @@ struct ContentView: View {
     }
 }
 
+extension UIImage {
+    // Эта функция возвращает UIImage, который содержит GIF анимацию
+    static func gif(name: String) -> UIImage? {
+        guard let bundleURL = Bundle.main.url(forResource: name, withExtension: "gif"),
+              let imageData = try? Data(contentsOf: bundleURL) else {
+            return nil
+        }
+        
+        return UIImage(data: imageData)
+    }
+}
+
 extension DateFormatter {
     static let yyyyMMdd: DateFormatter = {
         let formatter = DateFormatter()
@@ -166,20 +215,22 @@ struct DayButton: View {
     var body: some View {
         Button(action: action) {
             Text(dayNumber(from: day))
-                .font(.system(size: 16, weight: .medium))
-                .frame(minWidth: 36)
-                .padding(.vertical, 8)
+                .font(.system(size: 17, weight: .medium)) // Увеличенный размер шрифта
+                .padding(.vertical, 10) // Увеличенные вертикальные отступы
+                .padding(.horizontal, 20) // Увеличенные горизонтальные отступы
+                .frame(height: 44) // Установленная фиксированная высота кнопки
                 .background(
                     isSelected ? AnyView(LinearGradient(gradient: Gradient(colors: [Color.blue, Color.blue.opacity(0.7)]), startPoint: .top, endPoint: .bottom)) : AnyView(Color.gray.opacity(0.3))
                 )
-                .foregroundColor(isSelected ? .white : .black)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18)
-                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2)
-                )
-                .clipShape(Capsule())
-                .shadow(color: isSelected ? Color.blue.opacity(0.5) : Color.clear, radius: 5, x: 0, y: 0)
-                .animation(.easeInOut, value: isSelected)
+                .foregroundColor(isSelected ? .white : .primary)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 25) // Увеличенный радиус скругления
+                                        .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
+                                )
+                                .clipShape(Capsule())
+                                .shadow(color: isSelected ? Color.blue.opacity(0.5) : Color.clear, radius: 3, x: 0, y: 3)
+                                .padding(7.5)
+                                .animation(.easeInOut, value: isSelected)
         }
     }
 }
